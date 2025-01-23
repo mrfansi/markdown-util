@@ -27,10 +27,10 @@ def sanitize_domain_name(name: str) -> str:
     Returns:
         Sanitized domain name safe for filesystem
     """
-    # Replace special chars with underscores
+    # Replace special chars with underscores except internal hyphens
     sanitized = re.sub(r'[^\w\-\.]', '_', name)
-    # Remove leading/trailing special chars
-    sanitized = sanitized.strip('-_')
+    # Remove leading/trailing special chars and dots
+    sanitized = sanitized.strip('-_\.')
     # Convert to lowercase
     return sanitized.lower()
 
