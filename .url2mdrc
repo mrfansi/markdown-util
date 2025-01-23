@@ -51,7 +51,12 @@ html:
 output:
   # File organization
   structure:
-    date_folders: true  # Create YYYY-MM-DD folders
+    date_folders: false  # Deprecated, use domain_folders instead
+    domain_folders: true  # Create folders based on domain names
+    domain_options:
+      include_subdomains: true  # Create subfolders for subdomains
+      sanitize_chars: true  # Replace special chars with underscores
+      fallback_folder: "unknown_domain"  # Folder for invalid domains
     readme_index: true  # Create README.md index
     assets_dir: _assets  # Directory for downloaded assets
 

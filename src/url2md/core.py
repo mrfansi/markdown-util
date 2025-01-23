@@ -93,9 +93,20 @@ class Url2Md:
         if handler_type not in self._handlers:
             raise ValueError(f"No handler registered for type: {handler_type}")
 
-        # Create output directory with date-based structure
-        date_dir = datetime.now().strftime("%Y-%m-%d")
-        output_path = self.output_dir / date_dir
+        # Create output directory based on configuration
+        if self.config.get('output', {}).get('structure', {}).get('domain_folders', False):
+            from url2md.utils.domain import build_domain_path
+            domain_path = build_domain_path(
+                url,
+                include_subdomains=self.config['output']['structure']['domain_options']['include_subdomains'],
+                fallback=self.config['output']['structure']['domain_options']['fallback_folder']
+            )
+            output_path = self.output_dir / domain_path
+        else:
+            # Fallback to date-based structure
+            date_dir = datetime.now().strftime("%Y-%m-%d")
+            output_path = self.output_dir / date_dir
+            
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize handler

@@ -25,3 +25,4 @@ mkdocs-material>=9.1.0
 
 # Development Tools
 pre-commit>=3.3.0
+tldextract>=5.0.0
