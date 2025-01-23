@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import aiohttp
+from requests_html import AsyncHTMLSession
 
 from bs4 import BeautifulSoup, Tag
 from markdownify import MarkdownConverter
@@ -90,6 +91,7 @@ class HtmlHandler(BaseHandler):
     async def fetch_content(self) -> None:
         """Fetch and render HTML content from URL."""
         timeout = aiohttp.ClientTimeout(total=self.timeout)
+        # Create async session and fetch content
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(self.url) as response:
                 html = await response.text()
@@ -98,16 +100,24 @@ class HtmlHandler(BaseHandler):
                 render_opts = self.config.get('js_render', {})
                 scroll = render_opts.get('scroll', False)
                 
-                # Create HTML object for rendering
-                html_obj = HTML(html=html)
+                # Use BeautifulSoup to parse HTML
+                soup = BeautifulSoup(html, 'html.parser')
                 
-                # Render JavaScript content using instance timeout and wait
-                await html_obj.arender(
-                    timeout=self.timeout,
-                    wait=self.wait,
-                    scrolldown=scroll and True
-                )
-                self.content = html_obj.html
+                # Handle JavaScript rendering if needed
+                if render_opts.get('render_js', False):
+                    from pyppeteer import launch
+                    browser = await launch(headless=True)
+                    page = await browser.newPage()
+                    await page.goto(self.url, {
+                        'waitUntil': 'networkidle2',
+                        'timeout': self.timeout * 1000
+                    })
+                    if scroll:
+                        await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+                    self.content = await page.content()
+                    await browser.close()
+                else:
+                    self.content = str(soup)
 
     async def convert(self) -> List[Path]:
         """Convert HTML content to Markdown files.
