@@ -27,14 +27,15 @@ def sanitize_domain_name(name: str) -> str:
     Returns:
         Sanitized domain name safe for filesystem
     """
-    # Replace special chars with underscores except internal hyphens
-    sanitized = re.sub(r'[^\w\-\.]', '_', name)
-    # Remove leading/trailing special chars and dots
-    sanitized = sanitized.strip('-_')
-    # Remove trailing hyphens after dots
-    sanitized = re.sub(r'\.-+$', '.', sanitized)
-    # Convert to lowercase
-    return sanitized.lower()
+    # Convert to lowercase first
+    sanitized = name.lower()
+    # Replace spaces and special chars with underscores, preserving dots and internal hyphens
+    sanitized = re.sub(r'[^\w\-\.]', '_', sanitized)
+    # Convert hyphen-dot pattern to hyphen (e.g. "trailing-.com" -> "trailing-com")
+    sanitized = re.sub(r'-+\.([^.]+)$', r'-\1', sanitized)
+    # Remove any remaining leading/trailing special chars
+    sanitized = sanitized.strip('_')
+    return sanitized
 
 def build_domain_path(
     url: str, 
