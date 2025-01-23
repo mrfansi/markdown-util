@@ -10,6 +10,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from url2md.handlers.base_handler import BaseHandler
 from url2md.utils.logger import setup_logger
+from url2md.utils.markdown_splitter import MarkdownSplitter
 
 class Url2Md:
     """Main class for URL to Markdown conversion."""
@@ -117,14 +118,26 @@ class Url2Md:
                 await handler.fetch_content()
                 files = await handler.convert()
                 
+                # Split Markdown files if they contain multiple H1 headings
+                split_files = []
+                for file in files:
+                    try:
+                        split_result = self.split_markdown_file(file)
+                        split_files.extend(split_result)
+                    except ValueError:
+                        # File doesn't contain multiple H1s, keep original
+                        split_files.append(file)
+                
                 # Generate table of contents if multiple files
-                if len(files) > 1:
-                    toc_file = await handler.generate_toc(files)
-                    files.append(toc_file)
+                if len(split_files) > 1:
+                    toc_file = await handler.generate_toc(split_files)
+                    split_files.append(toc_file)
                 
                 # Verify checksums
-                for file in files:
+                for file in split_files:
                     await handler.verify_checksum(file)
+                
+                files = split_files
                 
                 progress.update(task, completed=True)
                 return files
@@ -133,6 +146,41 @@ class Url2Md:
                 self.logger.error(f"Conversion failed: {str(e)}", exc_info=True)
                 progress.update(task, description=f"[red]Error: {str(e)}")
                 raise
+
+    def split_markdown_file(self, markdown_file: Union[str, Path]) -> List[Path]:
+        """Split a Markdown file into multiple files based on H1 headings.
+        
+        Args:
+            markdown_file: Path to the Markdown file to split
+            
+        Returns:
+            List[Path]: List of generated Markdown files
+            
+        Raises:
+            ValueError: If file doesn't exist or has no H1 headings
+            IOError: If file cannot be read
+        """
+        file_path = Path(markdown_file)
+        if not file_path.exists():
+            raise ValueError(f"Markdown file not found: {markdown_file}")
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # Create output directory with same name as input file
+            output_dir = file_path.parent / file_path.stem
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Split and save files
+            MarkdownSplitter.split_markdown(content, str(output_dir))
+            
+            # Return list of generated files
+            return sorted(output_dir.glob("*.md"))
+            
+        except Exception as e:
+            self.logger.error(f"Failed to split Markdown file: {str(e)}", exc_info=True)
+            raise
 
     def run(self, url: str, handler_type: str = "html") -> List[Path]:
         """Synchronous wrapper for convert method.

@@ -56,6 +56,22 @@ url2md https://example.com https://another-site.com
 
 ### Advanced Options
 
+#### Automatic Markdown Splitting
+
+When converting URLs, the tool automatically splits content into multiple files based on H1 headings (# Title). Each H1 heading creates a new file named after the heading text, preserving the content hierarchy.
+
+Example output structure:
+```
+docs/
+├── 2024-01-23/
+│   ├── Introduction.md
+│   ├── Installation.md
+│   ├── Usage.md
+│   └── README.md
+```
+
+#### Specify Output Directory
+
 Specify output directory:
 
 ```bash
