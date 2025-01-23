@@ -92,36 +92,6 @@ class BaseHandler(ABC):
         toc_file.write_text("\n".join(toc_content))
         return toc_file
 
-    async def verify_checksum(self, file: Path) -> bool:
-        """Verify file integrity using SHA-256 checksum.
-
-        Args:
-            file: Path to file to verify
-
-        Returns:
-            bool: True if checksum matches stored value
-        """
-        if not file.exists():
-            return False
-
-        # Calculate checksum
-        sha256_hash = hashlib.sha256()
-        with file.open("rb") as f:
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-        
-        checksum = sha256_hash.hexdigest()
-        
-        # Store checksum in a hidden file
-        checksum_file = file.parent / f".{file.name}.sha256"
-        if not checksum_file.exists():
-            checksum_file.write_text(checksum)
-            return True
-        
-        # Verify against stored checksum
-        stored_checksum = checksum_file.read_text().strip()
-        return checksum == stored_checksum
-
     def _sanitize_filename(self, filename: str) -> str:
         """Sanitize filename for filesystem compatibility.
 

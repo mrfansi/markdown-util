@@ -3,6 +3,7 @@ import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
+from url2md.utils.formatter import MarkdownFormatter
 
 import yaml
 from rich.console import Console
@@ -133,11 +134,12 @@ class Url2Md:
                     toc_file = await handler.generate_toc(split_files)
                     split_files.append(toc_file)
                 
-                # Verify checksums
-                for file in split_files:
-                    await handler.verify_checksum(file)
-                
                 files = split_files
+                
+                # Format generated Markdown files
+                if self.config.get('format_markdown', True):
+                    formatter = MarkdownFormatter(self.config.get('formatting', {}))
+                    formatter.format_directory(self.output_dir)
                 
                 progress.update(task, completed=True)
                 return files

@@ -75,17 +75,44 @@ class CustomMarkdownConverter(MarkdownConverter):
                 for em in cell.find_all('em'):
                     em.string = f'*{em.get_text()}*'
                 
-                # Handle multi-line content
+                # Convert lists first
+                lists = []
+                for ul in cell.find_all('ul'):
+                    list_items = []
+                    for li in ul.find_all('li'):
+                        # Convert any nested code elements
+                        for code in li.find_all('code'):
+                            code.string = f'`{code.get_text()}`'
+                        list_items.append(f"- {li.get_text().strip()}")
+                    lists.append('\n'.join(list_items))
+                    ul.decompose()  # Remove processed lists
+                
+                # Convert any remaining code elements
+                for code in cell.find_all('code'):
+                    code.string = f'`{code.get_text()}`'
+                
+                # Get base content
                 content = cell.get_text().strip()
-                content = content.replace('\n', '<br>')  # Preserve line breaks
+                
+                # Add lists back with proper spacing
+                if lists:
+                    content = "{}\n\n{}".format(content, '\n\n'.join(lists))
                 
                 # Normalize checkmarks
                 content = re.sub(r'[✔✓]', '✅', content)  # Convert checkmarks
                 content = re.sub(r'[✗×]', '❌', content)  # Convert cross marks
                 
-                # Add optional/required indicators
-                if any(word in content.lower() for word in ['optional', 'required']):
-                    content = f'**{content}**'
+                # Clean up formatting and handle required/optional indicators
+                content = content.replace('**', '')  # Remove existing bold formatting
+                content = content.replace('*', '')   # Remove existing italic formatting
+                
+                if 'required' in content.lower():
+                    content = f'**{content.replace("required", "").strip()}** required'
+                elif 'optional' in content.lower():
+                    content = f'*{content.replace("optional", "").strip()}* optional'
+                
+                # Normalize line breaks and spacing
+                content = ' '.join(content.split())
                 
                 cells.append(content)
             if cells:
@@ -104,32 +131,21 @@ class CustomMarkdownConverter(MarkdownConverter):
         # Add separator with proper alignment
         alignments = []
         for header in headers:
-            if any(word in header.lower() for word in ['required', 'optional']):
-                alignments.append(':---:')  # Center align for status columns
-            elif any(word in header.lower() for word in ['country', 'channel']):
-                alignments.append(':---')   # Left align for descriptive columns
-            else:
-                alignments.append('---:')   # Right align for others
+            alignments.append('---:')  # Right align all columns by default
         table.append('| ' + ' | '.join(alignments) + ' |')
         
-        # Add rows with proper formatting
-        for row in rows:
-            formatted_row = []
-            for cell in row:
-                # Handle line breaks and special formatting
-                cell = cell.replace('<br>', '<br>')  # Convert HTML line breaks
-                cell = re.sub(r'\s+', ' ', cell)     # Normalize whitespace
-                
-                # Format code blocks and special text
-                cell = re.sub(r'`([^`]+)`', r'`\1`', cell)  # Ensure proper code formatting
-                cell = re.sub(r'\*\*([^*]+)\*\*', r'**\1**', cell)  # Ensure proper bold formatting
-                cell = re.sub(r'\*([^*]+)\*', r'*\1*', cell)  # Ensure proper italic formatting
-                
-                formatted_row.append(cell)
-            table.append('| ' + ' | '.join(formatted_row) + ' |')
+        # Use new table formatter
+        from url2md.utils.table_formatter import TableFormatter
+        formatter = TableFormatter()
+        return formatter.format_table(headers, rows)
         
-        # Add consistent spacing around table
-        return '\n\n' + '\n'.join(table) + '\n\n'
+        # Clean up table formatting and spacing
+        formatted_table = '\n'.join(table)
+        formatted_table = formatted_table.replace('****', '')
+        formatted_table = formatted_table.replace('**', '')
+        formatted_table = formatted_table.replace('*', '')
+        formatted_table = '\n\n'.join([line.strip() for line in formatted_table.split('\n')])
+        return formatted_table + '\n\n'
 
     def convert_pre(self, el: Tag, text: str, convert_as_inline: bool) -> str:
         """Convert pre tags maintaining code blocks.
