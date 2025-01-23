@@ -1,6 +1,7 @@
 """Utility for splitting and saving HTML content."""
 import re
 from pathlib import Path
+from typing import List
 from datetime import datetime
 from bs4 import BeautifulSoup
 

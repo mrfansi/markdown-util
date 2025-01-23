@@ -102,16 +102,20 @@ class CustomMarkdownConverter(MarkdownConverter):
                 content = re.sub(r'[✔✓]', '✅', content)  # Convert checkmarks
                 content = re.sub(r'[✗×]', '❌', content)  # Convert cross marks
                 
-                # Clean up formatting and handle required/optional indicators
-                content = content.replace('**', '')  # Remove existing bold formatting
-                content = content.replace('*', '')   # Remove existing italic formatting
+                # Clean up formatting and convert to parameter table format
+                # Handle header parameters with proper markdown
+                content = re.sub(
+                    r'-\s*\*\*(Header|Parameter|Body Parameter)\*\*:\s*\*?([^*]+)\*?\s*(`+)?(required|optional)',
+                    r'- **\1:** `\4` - \2',
+                    content
+                )
                 
-                if 'required' in content.lower():
-                    content = f'**{content.replace("required", "").strip()}** required'
-                elif 'optional' in content.lower():
-                    content = f'*{content.replace("optional", "").strip()}* optional'
-                
-                # Normalize line breaks and spacing
+                # Convert parameter lists to table rows
+                content = re.sub(
+                    r'-\s+\*\*(.+?)\*\*:\s*`(.+?)`\s+-\s+(.+?)(?=\n-|\n\n|$)',
+                    r'|\1|\2|\3|',
+                    content
+                )
                 content = ' '.join(content.split())
                 
                 cells.append(content)
@@ -159,20 +163,28 @@ class CustomMarkdownConverter(MarkdownConverter):
             str: Markdown formatted code block
         """
         code = el.find('code')
+        lang = None
+        
         if code:
-            # Try to detect language from class
-            lang = None
-            if 'class' in code.attrs:
-                classes = code.get('class', [])
-                for cls in classes:
-                    if cls.startswith(('language-', 'lang-')):
-                        lang = cls.replace('language-', '').replace('lang-', '')
-                        break
-            
-            # Add detected language or leave blank
-            return f'```{lang or ""}\n{text.strip()}\n```'
+            # Try to detect language from class or content
+            classes = code.get('class', [])
+            for cls in classes:
+                if cls.startswith(('language-', 'lang-')):
+                    lang = cls.replace('language-', '').replace('lang-', '')
+                    break
+                    
+            # Detect language from code content
+            if not lang and 'curl' in text:
+                lang = 'curl'
+            elif not lang and any(s in text for s in ['{', '}', 'JSON']):
+                lang = 'json'
 
-        return f'```\n{text.strip()}\n```'
+        # Format with proper code fences and language
+        # Clean excessive backticks and normalize code formatting
+        code_content = re.sub(r'`{3,}', '```', text.strip())  # Normalize 3+ backticks to triple
+        code_content = re.sub(r'^[\-> ]+`', '`', code_content)  # Fix example header markers
+        code_content = code_content.strip('`')  # Remove wrapping backticks
+        return f'```{lang or ""}\n{code_content}\n```\n'
 
 class HtmlHandler(BaseHandler):
     """Handler for converting HTML content to Markdown."""

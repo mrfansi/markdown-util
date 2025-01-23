@@ -12,6 +12,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from url2md.handlers.base_handler import BaseHandler
 from url2md.utils.logger import setup_logger
 from url2md.utils.markdown_splitter import MarkdownSplitter
+from url2md.utils.html_splitter import HtmlSplitter
 
 class Url2Md:
     """Main class for URL to Markdown conversion."""
@@ -119,12 +120,21 @@ class Url2Md:
                 await handler.fetch_content()
                 files = await handler.convert()
                 
-                # Split Markdown files if they contain multiple H1 headings
+                # Split both Markdown and HTML files
                 split_files = []
+                html_splitter = HtmlSplitter(output_path)
+                
                 for file in files:
                     try:
-                        split_result = self.split_markdown_file(file)
-                        split_files.extend(split_result)
+                        # Split Markdown
+                        md_split_result = self.split_markdown_file(file)
+                        split_files.extend(md_split_result)
+                        
+                        # Split HTML
+                        with open(file, 'r') as f:
+                            html_content = f.read()
+                        html_splitter.split_and_save(html_content)
+                        
                     except ValueError:
                         # File doesn't contain multiple H1s, keep original
                         split_files.append(file)
