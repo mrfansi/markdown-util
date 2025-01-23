@@ -30,7 +30,9 @@ def sanitize_domain_name(name: str) -> str:
     # Replace special chars with underscores except internal hyphens
     sanitized = re.sub(r'[^\w\-\.]', '_', name)
     # Remove leading/trailing special chars and dots
-    sanitized = sanitized.strip('-_\.')
+    sanitized = sanitized.strip('-_')
+    # Remove trailing hyphens after dots
+    sanitized = re.sub(r'\.-+$', '.', sanitized)
     # Convert to lowercase
     return sanitized.lower()
 
@@ -60,6 +62,12 @@ def build_domain_path(
     components = []
     if include_subdomains and extracted.subdomain:
         components.append(sanitize_domain_name(extracted.subdomain))
-    components.append(sanitize_domain_name(f"{extracted.domain}.{extracted.suffix}"))
+    
+    # Handle localhost case
+    if extracted.domain == "localhost":
+        return "localhost"
+        
+    domain_part = f"{extracted.domain}.{extracted.suffix}" if extracted.suffix else extracted.domain
+    components.append(sanitize_domain_name(domain_part))
     
     return "/".join(components)
