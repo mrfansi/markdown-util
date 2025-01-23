@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "url2md"
+version = "0.1.0"
+description = "Convert webpage content to structured Markdown files"
+readme = "README.md"
+authors = [{ name = "Your Name", email = "your.email@example.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = ["markdown", "web", "converter", "documentation"]
+dependencies = [
+    "typer>=0.9.0",
+    "requests-html>=0.10.0",
+    "beautifulsoup4>=4.12.2",
+    "markdownify>=0.11.6",
+    "rich>=13.7.0",
+    "pyyaml>=6.0.1",
+    "aiohttp>=3.9.1",
+    "python-frontmatter>=1.0.0",
+    "lxml[html_clean]>=4.9.0",  # Added html_clean extra
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21.0",  # Added pytest-asyncio
+    "pytest-mock>=3.10.0",
+    "black>=22.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+    "flake8>=5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/url2md"
+Documentation = "https://github.com/yourusername/url2md#readme"
+Repository = "https://github.com/yourusername/url2md.git"
+Issues = "https://github.com/yourusername/url2md/issues"
+
+[project.scripts]
+url2md = "url2md.cli:app"
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=url2md --cov-report=term-missing"
+markers = [
+    "asyncio: mark test as async",
+]
+# Configure default fixture loop scope
+asyncio_default_fixture_loop_scope = "function"

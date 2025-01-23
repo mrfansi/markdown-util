@@ -1,0 +1,84 @@
+# url2md Configuration File
+# Copy this file to your project directory and customize as needed
+
+# Global settings
+output_directory: ./docs
+verbose: false
+checksum_verification: true
+
+# HTML handler settings
+html:
+  # JavaScript rendering settings
+  js_render:
+    enabled: true
+    timeout: 20  # seconds
+    wait_for: ".content"  # CSS selector to wait for
+    scroll: true  # Auto-scroll for lazy loading
+
+  # Content processing
+  content:
+    remove_selectors:
+      - .advertisement
+      - .cookie-notice
+      - .sidebar
+      - nav.navigation
+    preserve_selectors:
+      - article
+      - .main-content
+      - [role="main"]
+    
+    # Heading processing
+    headings:
+      split_on: h1  # Split into separate files at h1
+      min_length: 500  # Minimum content length for split
+      combine_short: true  # Combine short sections
+    
+    # Image handling
+    images:
+      download: true  # Download images locally
+      base_path: images  # Local image directory
+      skip_types:
+        - .gif
+        - .svg
+    
+    # Code blocks
+    code:
+      detect_language: true  # Try to detect code language
+      default_language: text  # Default if not detected
+      preserve_classes: true  # Keep original CSS classes
+
+# Output settings
+output:
+  # File organization
+  structure:
+    date_folders: true  # Create YYYY-MM-DD folders
+    readme_index: true  # Create README.md index
+    assets_dir: _assets  # Directory for downloaded assets
+
+  # Markdown settings
+  markdown:
+    heading_style: atx  # atx or setext
+    bullet_char: "-"    # -, *, or +
+    code_blocks: fenced # fenced or indented
+    emphasis: asterisks # asterisks or underscores
+    
+  # Table of contents
+  toc:
+    enabled: true
+    max_depth: 3
+    title: "Table of Contents"
+    number_sections: false
+
+# Logging settings
+logging:
+  file: url2md.log
+  level: info  # debug, info, warning, error
+  format: "[%(levelname)s] %(message)s"
+  colors: true
+
+# Error handling
+errors:
+  max_retries: 3
+  timeout: 30
+  ignore_ssl: false
+  user_agent: "url2md/1.0"

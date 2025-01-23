@@ -1,0 +1,7 @@
+-r base.txt
+
+# Performance optimizations
+uvloop>=0.17.0  # Fast event loop
+ujson>=5.7.0    # Fast JSON parser
+aiodns>=3.0.0   # Async DNS resolver
+cchardet>=2.1.7 # Fast character encoding detection
